@@ -13,7 +13,7 @@ def search_by_keyword(keyword):
     return results
 
 
-def search_by_genre_and_year(genre, year):
+def search_by_genre(genre):
     query = """
     select c.name as genre, f.release_year as year, f.title, f.description 
     from film as f
@@ -21,13 +21,69 @@ def search_by_genre_and_year(genre, year):
     on f.film_id = fc.film_id
     join category as c
     on  c.category_id = fc.category_id
-    where name = %s and
-    release_year = %s
+    where c.name = %s 
+    order by genre
+    
     limit 10;
     """
     connection = get_connection()
     cursor = connection.cursor()
-    cursor.execute(query, (genre, year))
+    cursor.execute(query, (genre,))
+    results = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return results
+
+
+def search_by_year(year):
+    query = """ 
+    SELECT release_year as year, title, description 
+    FROM film 
+    WHERE release_year = %s
+    ORDER BY year
+    LIMIT 10;
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute(query, (year,))
+    results = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return results
+
+
+def search_by_actor_name1(Actor):
+    query = """ 
+    SELECT a.first_name AS Actor, a.last_name as name, f.title, f.description 
+    FROM actor AS a
+    inner join film_actor AS fa ON a.actor_id = fa.actor_id
+    right join film AS f ON f.film_id = fa.film_id
+    WHERE a.first_name LIKE CONCAT('%', %s, '%')
+    order by a.first_name
+    LIMIT 10;
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute(query, (Actor,))
+    results = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return results
+
+def search_by_actor_name2(name):
+    query = """ 
+    SELECT a.first_name AS Actor, a.last_name as name, f.title, f.description 
+    FROM actor AS a
+    inner join film_actor AS fa ON a.actor_id = fa.actor_id
+    right join film AS f ON f.film_id = fa.film_id
+    WHERE 
+    a.last_name LIKE CONCAT('%', %s, '%')
+    order by a.last_name
+    LIMIT 10;
+    """
+    connection = get_connection()
+    cursor = connection.cursor()
+    cursor.execute(query, (name,))
     results = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -46,7 +102,7 @@ def save_search_query(query):
 
 def get_popular_queries():
     query = "SELECT query, COUNT(*) as count FROM search_queries GROUP BY query ORDER BY count DESC;"
-    connection = get_connection()
+    connection = get_connection2()
     cursor = connection.cursor()
     cursor.execute(query)
     results = cursor.fetchall()
